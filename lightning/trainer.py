@@ -3,7 +3,7 @@ import lightning as L
 from lightning.pytorch.cli import LightningCLI, LightningArgumentParser
 from lightning.pytorch.strategies.deepspeed import DeepSpeedStrategy
 from lightning.pytorch.loggers import WandbLogger
-from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor
+from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor, TQDMProgressBar
 from transformers import DataCollatorForSeq2Seq
 
 from module import LLamaFTLightningModule, FTDataModule
@@ -26,7 +26,9 @@ if __name__ == "__main__":
             "accumulate_grad_batches": 4,
             "profiler": "PassThroughProfiler",
             "logger": [WandbLogger(project="LLM-Finetuning"),],
-            "callbacks": [EarlyStopping(monitor="val_loss", patience=5), LearningRateMonitor()]
+            "callbacks": [EarlyStopping(monitor="val_loss", patience=5), 
+                          LearningRateMonitor(),
+                          TQDMProgressBar(refresh_rate=10)],
         },
         save_config_callback=None)
     # cli.add_arguments_to_parser(training_args)
