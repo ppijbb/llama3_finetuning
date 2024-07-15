@@ -1,0 +1,5 @@
+*.log
+*_log
+__pycache__
+wandb
+trainer_start
