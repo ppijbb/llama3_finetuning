@@ -1,0 +1,21 @@
+peft
+fire
+accelerator
+transformers
+datasets
+evaluate
+pyarrow
+galore-torch
+pytorch-ignite
+rouge-score
+nltk
+py7zr
+optimum[exporters]
+trl
+lightning
+jsonargparse[signatures]
+deepspeed
+colossalai
+wandb
+tensorrt
+nvidia-modelopt --index https://pypi.nvidia.com
