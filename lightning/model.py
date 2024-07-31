@@ -5,7 +5,7 @@ from peft import (inject_adapter_in_model, prepare_model_for_kbit_training,
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
 
-base_model_id = "Qwen/Qwen2-1.5B-Instruct" # @param ["Gunulhona/tb_pretrained_sts", "Gunulhona/tb_pretrained", "google/flan-t5-xxl", "meta-llama/Meta-Llama-3-8B", "meta-llama/Meta-Llama-3-70B-Instruct", "mistralai/Mistral-7B-Instruct-v0.3", "Qwen/Qwen2-7B-Instruct", "google/gemma-7b", "MLP-KTLim/llama-3-Korean-Bllossom-8B", "EleutherAI/polyglot-ko-12.8b", "vilm/vulture-40b", "arcee-ai/Arcee-Spark", "Qwen/Qwen2-1.5B-Instruct", "OuteAI/Lite-Mistral-150M", "google/gemma-2b-it"] {allow-input: true}
+base_model_id = "meta-llama/Meta-Llama-3-8B" # @param ["Gunulhona/tb_pretrained_sts", "Gunulhona/tb_pretrained", "google/flan-t5-xxl", "meta-llama/Meta-Llama-3-8B", "meta-llama/Meta-Llama-3-70B-Instruct", "mistralai/Mistral-7B-Instruct-v0.3", "Qwen/Qwen2-7B-Instruct", "google/gemma-7b", "MLP-KTLim/llama-3-Korean-Bllossom-8B", "EleutherAI/polyglot-ko-12.8b", "vilm/vulture-40b", "arcee-ai/Arcee-Spark", "Qwen/Qwen2-1.5B-Instruct", "OuteAI/Lite-Mistral-150M", "google/gemma-2b-it"] {allow-input: true}
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,

@@ -26,9 +26,9 @@ if __name__ == "__main__":
             "accumulate_grad_batches": 4,
             "profiler": "PassThroughProfiler",
             "logger": [WandbLogger(project="LLM-Finetuning"),],
-            "callbacks": [EarlyStopping(monitor="val_loss", patience=5), 
+            "callbacks": [EarlyStopping(monitor="val_loss", patience=3), 
                           LearningRateMonitor(),
-                          TQDMProgressBar(refresh_rate=10)],
+                          TQDMProgressBar(refresh_rate=30)],
         },
         save_config_callback=None)
     # cli.add_arguments_to_parser(training_args)

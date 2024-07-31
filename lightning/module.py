@@ -208,6 +208,50 @@ class LLamaFTLightningModule(L.LightningModule):
         for k, v in rouge_score.items():
             self._log(f"val_{k}", v, self.trainer.datamodule.eval_batch_size,)
 
+
+    def on_validation_epoch_end(self, *args,**kwargs):
+        prompt_texts = [{
+            "role": "system",
+            "content": "You are helpful summary LLama"
+        }]
+
+        context = """
+ 아래 대화 내용을 요약해줘:
+ 영희: 안녕 철수야, 내일 오후에 바쁘니?
+ 철수: 바쁠것 같아.. 왜?
+ 영희: 내일 동물 보호소에 같이 갈래?
+ 철수: 뭐 하려고?
+ 영희: 아들한테 강아지 선물 하려고.
+ 철수: 좋은 생각이다. 그래 같이 가자.
+ 영희: 난 작은 강아지 한마리를 아들에게 사 줄까 해.
+ 철수: 그래 너무 크지 않은 녀석이 좋겠다.
+ ---
+ 요약:
+""" 
+        chat_template = {
+            "role": "user",
+            "content": context
+        }
+        prompt_texts.append(chat_template)
+     
+        
+        print(f'''
+            ########### test summary ############
+            {self.generate(prompt_texts)}
+            #####################################
+              ''')
+
+
+    def generate(self, text):
+        return self.tokenizer.decode(
+            self.model.generate(
+                tokenizer.apply_chat_template(
+                    text, 
+                    add_generateion_prompt=True, 
+                    return_tensors="pt" ).to(self.model.device),
+                max_new_tokens=100,
+                )[0])
+
     def configure_optimizers(self):
         optimizer = Lion(params=self.model.parameters(),
                          lr=self.learning_rate,
