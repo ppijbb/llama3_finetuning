@@ -10,8 +10,8 @@ python = "^3.12"
 langchain = "^0.2.5"
 torchvision = {version = "^0.18.1+cu121", source = "torch"}
 torchaudio = {version = "^2.3.1+cu121", source = "torch"}
-jax = {extras = ["cuda11-pip"], version = "^0.4.30", source = "jaxlib"}
-transformers = "^4.41.2"
+# jax = {extras = ["cuda11"], version = "^0.4.30" }
+transformers = { git="https://github.com/huggingface/transformers.git" }
 faiss-cpu = "^1.8.0.post1"
 chromadb = "^0.5.3"
 openai = "^1.35.3"

@@ -7,7 +7,7 @@ import deepspeed
 from data_module import get_dataset
 
 # 모델과 토크나이저 불러오기
-model_id = "microsoft/Phi-3-mini-4k-instruct"
+model_id = "Gunulhona/Gemma-Ko-Merge"
 model = AutoModelForCausalLM.from_pretrained(model_id,
                                             device_map="auto",
                                             torch_dtype=torch.bfloat16,
@@ -20,9 +20,14 @@ tokenizer = AutoTokenizer.from_pretrained(model_id,
 # Lora 설정 정의
 lora_config = LoraConfig(
     target_modules=[
-        "dense",
-        "o_proj",
-        "qkv_proj"],
+        "k_proj",
+        "down_proj",
+        "gate_proj",
+        "q_proj",
+        "v_proj",
+        "up_proj",
+        "o_proj"
+    ],
     r=16,
     lora_alpha=32,
     lora_dropout=0.05,
@@ -70,7 +75,7 @@ optimizer_kwargs = {
     }
 
 dataset = get_dataset(
-    dataset_name="argilla/dpo-mix-7k",
+    dataset_name="Gunulhona/open_dpo_merged",
     tokenizer=tokenizer)
 
 # DPOTrainer 초기화 (Deepspeed, PagedAdamW 적용)
