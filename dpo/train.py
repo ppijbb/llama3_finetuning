@@ -7,7 +7,7 @@ import deepspeed
 from data_module import get_dataset
 
 # 모델과 토크나이저 불러오기
-model_id = "Gunulhona/Gemma-Ko-Merge"
+model_id = "Gunulhona/Phi-Small-Merge"
 model = AutoModelForCausalLM.from_pretrained(model_id,
                                             device_map="auto",
                                             torch_dtype=torch.bfloat16,
@@ -34,39 +34,25 @@ lora_config = LoraConfig(
     bias="none",
     task_type="CAUSAL_LM")
 
-# Lora를 기본 모델에 적용
-model = get_peft_model(model, lora_config)
-
 # 참조 모델 불러오기 (필요에 따라 수정)
-ref_model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map="auto",
-    torch_dtype=torch.bfloat16,
-    trust_remote_code=True,
-    return_dict=True)
+# ref_model = model
+
+# Lora를 기본 모델에 적용
+# model = get_peft_model(model, lora_config)
+
 
 # DPO 설정 정의
 training_args = DPOConfig(
     beta=0.1,
-    output_dir="dpo_output"
+    loss_type="ipo",
+    max_length=4096,
+    bf16=True,
+    output_dir="dpo_output",
+    deepspeed="deepspeed_config.yaml",
+    logging_steps=50,
+    num_train_epochs=50,
+    per_device_train_batch_size=2,
 )
-
-# Deepspeed 설정 정의 (Stage 2)
-deepspeed_config = {
-    "train_micro_batch_size_per_gpu": 1,
-    "gradient_accumulation_steps": 1,
-    "zero_optimization": {
-        "stage": 2,
-        "offload_param": {
-            "device": "cpu",
-            "pin_memory": True
-        },
-        "offload_optimizer": {
-            "device": "cpu",
-            "pin_memory": True
-        }
-    }
-}
 
 # BitsandBytes Paged AdamW Optimizer 설정
 optimizer_class = bnb.optim.PagedAdamW
@@ -87,8 +73,9 @@ dpo_trainer = DPOTrainer(
     train_dataset=dataset["train"],  # 학습 데이터셋
     eval_dataset=dataset["test"],  # 학습 데이터셋
     tokenizer=tokenizer,
+    peft_config=lora_config,
     # deepspeed=deepspeed_config,
-    optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
+    # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
 )
 
 # DPO를 사용하여 모델 학습

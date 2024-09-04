@@ -29,10 +29,12 @@ def processing(sample,
     #     "chosen": tokenizer.apply_chat_template([chosen[1]], tokenize=True),
     #     "rejected": tokenizer.apply_chat_template([rejected[1]], tokenize=True),
     #  }
-        return {
-        "prompt": tokenizer.apply_chat_template([sample["prompt"]], tokenize=True,),
-        "chosen": tokenizer.apply_chat_template([sample["chosen"]], tokenize=True),
-        "rejected": tokenizer.apply_chat_template([sample["rejected"]], tokenize=True),
+    if len(sample["rejected"]) ==0:
+        sample["rejected"] = [{"role":"assistant","content":""}]
+    return {
+        "prompt": tokenizer.apply_chat_template(sample["prompt"], tokenize=False,),
+        "chosen": tokenizer.apply_chat_template(sample["chosen"], tokenize=False),
+        "rejected": tokenizer.apply_chat_template(sample["rejected"], tokenize=False),
      }
 
 def get_dataset(
