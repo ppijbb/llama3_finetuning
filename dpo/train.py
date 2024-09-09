@@ -34,23 +34,25 @@ model_id = "microsoft/Phi-3.5-mini-instruct"
 model, tokenizer = FastLanguageModel.from_pretrained(
     model_name = model_id,
     max_seq_length = 1024,
-    dtype = None, # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+    dtype = torch.bfloat16, # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
     load_in_4bit = True, # Use 4bit quantization to reduce memory usage. Can be False.
     # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
 )
 
-
-# Lora 설정 정의
-peft_config = LoraConfig(
-    target_modules=[
+lora_targets=[
         "k_proj",
         # "down_proj",
         # "gate_proj",
         "q_proj",
         "v_proj",
         # "up_proj",
+        # "down_proj",
         "o_proj"
-    ],
+    ]
+
+# Lora 설정 정의
+peft_config = LoraConfig(
+    target_modules=lora_targets,
     r=8,
     lora_alpha=16,
     lora_dropout=0.05,
@@ -66,15 +68,13 @@ peft_config = LoraConfig(
 
 model = FastLanguageModel.get_peft_model(
     model,
-    r = 16,
-    target_modules = ["q_proj", "k_proj", "v_proj",
-                      "o_proj", "gate_proj", 
-                      "up_proj", "down_proj",],
-    lora_alpha = 16,
-    lora_dropout = 0, # Dropout = 0 is currently optimized
-    bias = "none",    # Bias = "none" is currently optimized
-    use_gradient_checkpointing = True,
-    random_state = 3407,
+    r=16,
+    target_modules=lora_targets,
+    lora_alpha=16,
+    lora_dropout=0, # Dropout = 0 is currently optimized
+    bias="none",    # Bias = "none" is currently optimized
+    use_gradient_checkpointing=True,
+    random_state=3407,
 )
 # peft_config = LoHaConfig(
 #     target_modules=[
@@ -93,13 +93,14 @@ model = FastLanguageModel.get_peft_model(
 
 
 # DPO 설정 정의
-training_args = DPOConfig(
+dpo_config = DPOConfig(
     beta=0.1,
     loss_type="ipo",
     max_prompt_length=256,
     max_target_length=1024,
     max_length=1024,
     bf16=True,
+    bf16_full_eval=True,
     output_dir="dpo_output",
     # deepspeed="deepspeed_config.json",
     logging_steps=50,
@@ -113,7 +114,7 @@ training_args = DPOConfig(
 # BitsandBytes Paged AdamW Optimizer 설정
 optimizer_class = bnb.optim.PagedAdamW
 optimizer_kwargs = {
-    "lr": training_args.learning_rate
+    "lr": dpo_config.learning_rate
     }
 
 dataset = get_dataset(
@@ -124,7 +125,7 @@ dataset = get_dataset(
 dpo_trainer = DPOTrainer(
     model=model,
     ref_model=None,
-    args=training_args,
+    args=dpo_config,
     # data_callator=,
     train_dataset=dataset["train"],  # 학습 데이터셋
     eval_dataset=dataset["test"],  # 학습 데이터셋
@@ -135,4 +136,5 @@ dpo_trainer = DPOTrainer(
 )
 
 # DPO를 사용하여 모델 학습
-dpo_trainer.train()
+if __name__ == "__main__":
+    dpo_trainer.train()
