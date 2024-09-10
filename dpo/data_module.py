@@ -29,8 +29,20 @@ def processing(sample,
     #     "chosen": tokenizer.apply_chat_template([chosen[1]], tokenize=True),
     #     "rejected": tokenizer.apply_chat_template([rejected[1]], tokenize=True),
     #  }
+    if "Gemma" in tokenizer.config.tokenizer_class:
+        for sam in sample["chosen"]:
+            if sam["role"] == "system":
+                sam["role"] = "user"
+        for sam in sample["prompt"]:
+            if sam["role"] == "system":
+                sam["role"] = "user"
+        for sam in sample["rejected"]:
+            if sam["role"] == "system":
+                sam["role"] = "user"
+
     if len(sample["rejected"]) ==0:
-        sample["rejected"] = [{"role":"assistant","content":""}]
+        sample["rejected"] = [{"role":"assistant", "content":""}]
+    
     return {
         "prompt": tokenizer.apply_chat_template(sample["prompt"], tokenize=False,),
         "chosen": tokenizer.apply_chat_template(sample["chosen"], tokenize=False),
