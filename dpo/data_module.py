@@ -1,6 +1,11 @@
 import torch
 from datasets import load_dataset
+from transformers import GemmaTokenizer, GemmaTokenizerFast
 
+def no_system_template(tokenizer):
+    no_system_templates = [GemmaTokenizer, GemmaTokenizerFast]
+    for t in no_system_templates:
+        yield isinstance(tokenizer, t)
 
 def processing(sample,
                tokenizer):
@@ -29,7 +34,7 @@ def processing(sample,
     #     "chosen": tokenizer.apply_chat_template([chosen[1]], tokenize=True),
     #     "rejected": tokenizer.apply_chat_template([rejected[1]], tokenize=True),
     #  }
-    if "Gemma" in tokenizer.config.tokenizer_class:
+    if any(no_system_template(tokenizer)):
         for sam in sample["chosen"]:
             if sam["role"] == "system":
                 sam["role"] = "user"
@@ -39,6 +44,8 @@ def processing(sample,
         for sam in sample["rejected"]:
             if sam["role"] == "system":
                 sam["role"] = "user"
+        sample["chosen"] = sample["prompt"] + sample["chosen"]
+        sample["rejected"] = sample["prompt"] + sample["rejected"]
 
     if len(sample["rejected"]) ==0:
         sample["rejected"] = [{"role":"assistant", "content":""}]

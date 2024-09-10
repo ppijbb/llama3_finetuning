@@ -5,7 +5,7 @@ from trl import DPOConfig, DPOTrainer  # DPOTrainer 사용
 from peft import LoraConfig, LoHaConfig, get_peft_model
 import bitsandbytes as bnb
 from data_module import get_dataset
-from unsloth import FastLanguageModel
+# from unsloth import FastLanguageModel
 
 
 # wandb 설정
@@ -22,6 +22,7 @@ os.environ["WANDB_WATCH"]="0"
 model_id = "Gunulhona/Gemma-Ko-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
 max_seq_len = 1024
+batch_per_device = 1
 
 print(f'''
 --------------------
@@ -111,10 +112,14 @@ dpo_config = DPOConfig(
     optim="adamw_hf", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit
     logging_steps=50,
     num_train_epochs=50,
-    gradient_accumulation_steps=64,
+    gradient_accumulation_steps=16,
     generate_during_eval=True,
     dataset_num_proc=8,
     report_to="wandb",
+    per_device_eval_batch_size=batch_per_device,
+    per_device_train_batch_size=batch_per_device,
+    per_gpu_eval_batch_size=batch_per_device,
+    per_gpu_train_batch_size=batch_per_device,
 )
 
 # BitsandBytes Paged AdamW Optimizer 설정
