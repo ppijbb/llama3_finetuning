@@ -19,28 +19,36 @@ os.environ["WANDB_WATCH"]="0"
 
 
 # 모델과 토크나이저 불러오기
-model_id = "unsloth/zephyr-sft"
+model_id = "Gunulhona/Gemma-Ko-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
 max_seq_len = 1024
-# model = AutoModelForCausalLM.from_pretrained(model_id,
-#                                              torch_dtype=torch.bfloat16,
-#                                              trust_remote_code=True,
-#                                              load_in_4bit=True,
-#                                              return_dict=True)
-# tokenizer = AutoTokenizer.from_pretrained(model_id,
-#                                           trust_remote_code=True,
-#                                           use_fast=True)
 
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = model_id,
-    trust_remote_code=True,
-    use_cache=True, # Use cache for faster decoding
-    max_seq_length=max_seq_len,
-    dtype=torch.bfloat16, # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
-    load_in_4bit=False, # Use 4bit quantization to reduce memory usage. Can be False.
-    # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
-    # attn_implementation="flash_attention_2", 
-)
+print(f'''
+--------------------
+Model ID: {model_id}
+--------------------
+''')
+model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        torch_dtype=torch.bfloat16,
+        trust_remote_code=True,
+        load_in_4bit=False,
+        return_dict=True)
+tokenizer = AutoTokenizer.from_pretrained(
+        model_id,
+        trust_remote_code=True,
+        use_fast=True)
+
+# model, tokenizer = FastLanguageModel.from_pretrained(
+#     model_name = model_id,
+#     trust_remote_code=True,
+#     use_cache=True, # Use cache for faster decoding
+#     max_seq_length=max_seq_len,
+#     dtype=torch.bfloat16, # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+#     load_in_4bit=False, # Use 4bit quantization to reduce memory usage. Can be False.
+#     # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
+#     # attn_implementation="flash_attention_2", 
+# )
 
 lora_targets=[
         "k_proj",
@@ -56,34 +64,35 @@ lora_targets=[
 # 참조 모델 불러오기 (필요에 따라 수정)
 # ref_model = model
 
-# Lora를 기본 모델에 적용
-# model = get_peft_model(
-    # model, 
-    # LoraConfig( # Lora 설정 정의
-    # target_modules=lora_targets,
-    # r=8,
-    # lora_alpha=16,
-    # lora_dropout=0.0,
-    # bias="none",
-    # init_lora_weights="gaussian",
-    # task_type="CAUSAL_LM"))
 
-model = FastLanguageModel.get_peft_model(
-    model=model,
-    r=16,
-    max_seq_length=max_seq_len,
+# Lora를 기본 모델에 적용
+# peft_config= LoraConfig( # Lora 설정 정의
+# target_modules=lora_targets,
+# r=8,
+# lora_alpha=16,
+# lora_dropout=0.0,
+# bias="none",
+# init_lora_weights="gaussian",
+# task_type="CAUSAL_LM")
+
+peft_config = LoHaConfig(
     target_modules=lora_targets,
-    lora_alpha=16,
-    lora_dropout=0, # Dropout = 0 is currently optimized
-    bias="none",    # Bias = "none" is currently optimized
-    use_gradient_checkpointing=True,
-    random_state=3407,
+    r=8,
+    alpha=32,
+    task_type="CAUSAL_LM"
 )
-# peft_config = LoHaConfig(
+# model = get_peft_model(model, peft_config)
+
+# model = FastLanguageModel.get_peft_model(
+#     model=model,
+#     r=16,
+#     max_seq_length=max_seq_len,
 #     target_modules=lora_targets,
-#     r=8,
-#     alpha=32,
-#     task_type="CAUSAL_LM"
+#     lora_alpha=16,
+#     lora_dropout=0, # Dropout = 0 is currently optimized
+#     bias="none",    # Bias = "none" is currently optimized
+#     use_gradient_checkpointing=True,
+#     random_state=3407,
 # )
 
 
@@ -134,5 +143,5 @@ dpo_trainer = DPOTrainer(
 
 # DPO를 사용하여 모델 학습
 if __name__ == "__main__":
-    with torch.autocast("cuda"): 
+    # with torch.autocast("cuda"): 
         dpo_trainer.train()
