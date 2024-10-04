@@ -25,6 +25,14 @@ class StudentModel(nn.Module):
 from model.moe_model import PhiMoEForCausalLM
 from model.moe_config import PhiMoEConfig
 
+def format_parameters(number):
+    if number >= 1_000_000_000:
+        return f"{number / 1_000_000_000:.2f} B"
+    elif number >= 1_000_000:
+        return f"{number / 1_000_000:.2f} M"
+    else:
+        return str(number)
+    
 
 test_model = PhiMoEForCausalLM(
     config=PhiMoEConfig(
@@ -36,10 +44,10 @@ test_model = PhiMoEForCausalLM(
         "model_type": "phimoe",
         "num_attention_heads": 32,
         "num_experts_per_tok": 2,
-        "num_hidden_layers": 8,
+        "num_hidden_layers": 32,
         "num_key_value_heads": 8,
         "num_local_experts": 16,
         "original_max_position_embeddings": 4096,
         }
     ))
-print(test_model.num_parameters())
+format_parameters(test_model.num_parameters())
