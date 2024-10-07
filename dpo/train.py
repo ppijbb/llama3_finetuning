@@ -67,21 +67,21 @@ lora_targets=[
 
 
 # Lora를 기본 모델에 적용
-# peft_config= LoraConfig( # Lora 설정 정의
-# target_modules=lora_targets,
-# r=8,
-# lora_alpha=16,
-# lora_dropout=0.0,
-# bias="none",
-# init_lora_weights="gaussian",
-# task_type="CAUSAL_LM")
-
-peft_config = LoHaConfig(
+peft_config= LoraConfig( # Lora 설정 정의
     target_modules=lora_targets,
     r=8,
-    alpha=32,
-    task_type="CAUSAL_LM"
-)
+    lora_alpha=32,
+    lora_dropout=0.0,
+    bias="none",
+    # init_lora_weights="gaussian",
+    task_type="CAUSAL_LM")
+
+# peft_config = LoHaConfig(
+#     target_modules=lora_targets,
+#     r=8,
+#     alpha=32,
+#     task_type="CAUSAL_LM"
+# )
 # model = get_peft_model(model, peft_config)
 
 # model = FastLanguageModel.get_peft_model(
