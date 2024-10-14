@@ -2,6 +2,7 @@ import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from trl import DPOConfig, DPOTrainer  # DPOTrainer 사용
+from trl import CPOConfig, CPOTrainer  # CPOTrainer 사용
 from peft import LoraConfig, LoHaConfig, get_peft_model
 import bitsandbytes as bnb
 from data_module import get_dataset
@@ -96,57 +97,112 @@ peft_config= LoraConfig( # Lora 설정 정의
 #     random_state=3407,
 # )
 
+match os.environ.get("RLHF_METHOD", "DPO"):
+    case "DPO":
+        # DPO 설정 정의
+        dpo_config = DPOConfig(
+            beta=0.1,
+            loss_type="ipo",
+            max_prompt_length=256,
+            max_target_length=max_seq_len,
+            max_length=max_seq_len,
+            fp16=False,
+            bf16=True,
+            # fp16_full_eval=True,
+            # bf16_full_eval=False,
+            output_dir="dpo_output",
+            optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
+            logging_steps=50,
+            num_train_epochs=50,
+            gradient_accumulation_steps=16,
+            generate_during_eval=True,
+            dataset_num_proc=8,
+            report_to="wandb",
+            per_device_eval_batch_size=batch_per_device,
+            per_device_train_batch_size=batch_per_device,
+            per_gpu_eval_batch_size=batch_per_device,
+            per_gpu_train_batch_size=batch_per_device,
+        )
 
-# DPO 설정 정의
-dpo_config = DPOConfig(
-    beta=0.1,
-    loss_type="ipo",
-    max_prompt_length=256,
-    max_target_length=max_seq_len,
-    max_length=max_seq_len,
-    fp16=False,
-    bf16=True,
-    # fp16_full_eval=True,
-    # bf16_full_eval=False,
-    output_dir="dpo_output",
-    optim="adamw_bnb_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
-    logging_steps=50,
-    num_train_epochs=50,
-    gradient_accumulation_steps=16,
-    generate_during_eval=True,
-    dataset_num_proc=8,
-    report_to="wandb",
-    per_device_eval_batch_size=batch_per_device,
-    per_device_train_batch_size=batch_per_device,
-    per_gpu_eval_batch_size=batch_per_device,
-    per_gpu_train_batch_size=batch_per_device,
-)
+        # BitsandBytes Paged AdamW Optimizer 설정
+        # optimizer_class = bnb.optim.PagedAdamW
+        # optimizer_kwargs = {
+        #     "lr": dpo_config.learning_rate
+        #     }
 
-# BitsandBytes Paged AdamW Optimizer 설정
-# optimizer_class = bnb.optim.PagedAdamW
-# optimizer_kwargs = {
-#     "lr": dpo_config.learning_rate
-#     }
+        dataset = get_dataset(
+            dataset_name="Gunulhona/open_dpo_merged",
+            tokenizer=tokenizer)
 
-dataset = get_dataset(
-    dataset_name="Gunulhona/open_dpo_merged",
-    tokenizer=tokenizer)
+        # DPOTrainer 초기화 (Deepspeed, PagedAdamW 적용)
+        rlhf_trainer = DPOTrainer(
+            model=model,
+            ref_model=None,
+            args=dpo_config,
+            # data_callator=,
+            train_dataset=dataset["train"],  # 학습 데이터셋
+            eval_dataset=dataset["test"],  # 학습 데이터셋
+            tokenizer=tokenizer,
+            # processing_class=tokenizer,
+            peft_config=peft_config,
+            # deepspeed=deepspeed_config,
+            # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
+        )
+    case "SIMPO":
+        # CPO 설정 정의
+        cpo_config = CPOConfig(
+            beta=0.1,
+            loss_type="simpo", # SimPO Loss
+            cpo_alpha=0.5, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
+            max_prompt_length=256,
+            max_target_length=max_seq_len,
+            max_length=max_seq_len,
+            fp16=False,
+            bf16=True,
+            # fp16_full_eval=True,
+            # bf16_full_eval=False,
+            output_dir="cpo_output",
+            optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
+            logging_steps=50,
+            num_train_epochs=50,
+            gradient_accumulation_steps=16,
+            generate_during_eval=True,
+            dataset_num_proc=8,
+            report_to="wandb",
+            per_device_eval_batch_size=batch_per_device,
+            per_device_train_batch_size=batch_per_device,
+            per_gpu_eval_batch_size=batch_per_device,
+            per_gpu_train_batch_size=batch_per_device,
+        )
 
-# DPOTrainer 초기화 (Deepspeed, PagedAdamW 적용)
-dpo_trainer = DPOTrainer(
-    model=model,
-    ref_model=None,
-    args=dpo_config,
-    # data_callator=,
-    train_dataset=dataset["train"],  # 학습 데이터셋
-    eval_dataset=dataset["test"],  # 학습 데이터셋
-    tokenizer=tokenizer,
-    peft_config=peft_config,
-    # deepspeed=deepspeed_config,
-    # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
-)
+        # BitsandBytes Paged AdamW Optimizer 설정
+        # optimizer_class = bnb.optim.PagedAdamW
+        # optimizer_kwargs = {
+        #     "lr": dpo_config.learning_rate
+        #     }
+
+        dataset = get_dataset(
+            dataset_name="Gunulhona/open_dpo_merged",
+            tokenizer=tokenizer)
+
+        # CPOTrainer 초기화 (Deepspeed, PagedAdamW 적용)
+        rlhf_trainer = CPOTrainer(
+            model=model,
+            ref_model=None,
+            args=cpo_config,
+            # data_callator=,
+            train_dataset=dataset["train"],  # 학습 데이터셋
+            eval_dataset=dataset["test"],  # 학습 데이터셋
+            tokenizer=tokenizer,
+            # processing_class=tokenizer,
+            peft_config=peft_config,
+            # deepspeed=deepspeed_config,
+            # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
+        )
+
+
 
 # DPO를 사용하여 모델 학습
 if __name__ == "__main__":
     # with torch.autocast("cuda"): 
-        dpo_trainer.train()
+        rlhf_trainer.train()
