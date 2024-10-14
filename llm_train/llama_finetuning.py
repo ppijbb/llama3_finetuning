@@ -148,6 +148,7 @@ def training_function(script_args, training_args):
         max_seq_length=script_args.max_seq_length,
         tokenizer=tokenizer,
         packing=True,
+        neftune_noise_alpha=5, # NEFTUNE noise, 임베딩 레이어에 노이즈 추가하는 방법
         dataset_kwargs={
             "add_special_tokens": False,  # We template with special tokens
             "append_concat_token": False,  # No need to add additional separator token
