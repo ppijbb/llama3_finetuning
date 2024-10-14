@@ -13,7 +13,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
     # attn_implementation="flash_attention_2", 
 )
 model.save_pretrained_gguf(
-    "/conan/conan/gguf", 
+    "/nas/conan/gguf", 
     tokenizer, 
     quantization_method="q4_k_m"
     )
