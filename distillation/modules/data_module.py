@@ -1,9 +1,10 @@
+from typing import Iterable
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 
-class CustomDataset(Dataset):
-    def __init__(self, data, transform=None):
+class DistilDataset(Dataset):
+    def __init__(self, data: Iterable, transform=None):
         self.data = data
         self.transform = transform
 
@@ -30,15 +31,22 @@ class DistillationDataModule(pl.LightningDataModule):
         ])
 
     def setup(self, stage=None):
-        self.train_dataset = CustomDataset(self.train_data, transform=self.transform)
-        self.val_dataset = CustomDataset(self.val_data, transform=self.transform)
-        self.test_dataset = CustomDataset(self.test_data, transform=self.transform)
+        self.train_dataset = DistilDataset(self.train_data, transform=self.transform)
+        self.val_dataset = DistilDataset(self.val_data, transform=self.transform)
+        self.test_dataset = DistilDataset(self.test_data, transform=self.transform)
+
+    def _get_data_loader(self, dataset):
+        return DataLoader(
+            dataset=dataset, 
+            batch_size=self.batch_size, 
+            shuffle=True if dataset==self.train_dataset else False,
+            num_workers=self.num_workers if dataset==self.train_dataset else 1)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+        return self._get_data_loader(dataset=self.train_dataset)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+        return self._get_data_loader(dataset=self.val_dataset)
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+        return self._get_data_loader(dataset=self.test_dataset)

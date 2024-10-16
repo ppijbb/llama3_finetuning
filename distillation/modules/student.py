@@ -36,18 +36,18 @@ def format_parameters(number):
 
 test_model = PhiMoEForCausalLM(
     config=PhiMoEConfig(
-        **{"hidden_size": 4096,
-        "initializer_range": 0.02,
-        "input_jitter_noise": 0.01,
-        "intermediate_size": 6400,
-        "max_position_embeddings": 131072,
-        "model_type": "phimoe",
-        "num_attention_heads": 32,
-        "num_experts_per_tok": 2,
-        "num_hidden_layers": 32,
-        "num_key_value_heads": 8,
-        "num_local_experts": 16,
-        "original_max_position_embeddings": 4096,
-        }
-    ))
+        **{
+            "hidden_size": 4096,
+            "initializer_range": 0.02,
+            "input_jitter_noise": 0.01,
+            "intermediate_size": 6400,
+            "max_position_embeddings": 131072,
+            "model_type": "phimoe",
+            "num_attention_heads": 32,
+            "num_experts_per_tok": 2,
+            "num_hidden_layers": 32,
+            "num_key_value_heads": 8,
+            "num_local_experts": 16,
+            "original_max_position_embeddings": 4096,
+        }))
 format_parameters(test_model.num_parameters())
