@@ -1,0 +1,15 @@
+CUDA_VISIBLE_DEVICES="0,1,2,3"
+CUDA_LAUNCH_BLOCKING=1
+PYTORCH_CUDA_ALLOC_CONF='expandable_segments:False'
+TORCH_USE_CUDA_DSA=1
+HF_DATASETS_CACHE="/home/conan/.cache/huggingface/datasets"
+NCCL_P2P_DISABLE=1
+NCCL_IB_DISABLE=1
+
+
+huggingface-cli login --token $HF_SECRET_KEY
+wandb login --relogin $WANDB_API_KEY
+
+accelerate launch \
+    --config_file accelerate_config.yaml \
+    train.py

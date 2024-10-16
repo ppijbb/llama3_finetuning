@@ -20,7 +20,7 @@ os.environ["WANDB_WATCH"]="0"
 
 
 # 모델과 토크나이저 불러오기
-model_id = "Gunulhona/Gemma-Ko-Merge"
+model_id = "Gunulhona/Llama-Agent-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
 max_seq_len = 1024
 batch_per_device = 1
@@ -28,6 +28,7 @@ batch_per_device = 1
 print(f'''
 --------------------
 Model ID: {model_id}
+Method : {os.environ.get("RLHF_METHOD")} (default: DPO)
 --------------------
 ''')
 model = AutoModelForCausalLM.from_pretrained(
@@ -155,7 +156,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             loss_type="simpo", # SimPO Loss
             cpo_alpha=0.5, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
             max_prompt_length=256,
-            max_target_length=max_seq_len,
+            # max_target_length=max_seq_len,
             max_length=max_seq_len,
             fp16=False,
             bf16=True,
@@ -188,7 +189,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
         # CPOTrainer 초기화 (Deepspeed, PagedAdamW 적용)
         rlhf_trainer = CPOTrainer(
             model=model,
-            ref_model=None,
+            # ref_model=None,
             args=cpo_config,
             # data_callator=,
             train_dataset=dataset["train"],  # 학습 데이터셋
