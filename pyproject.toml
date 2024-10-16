@@ -17,7 +17,6 @@ faiss-cpu = "^1.8.0.post1"
 chromadb = "^0.5.3"
 openai = "^1.35.3"
 streamlit = "^1.36.0"
-flash-attn = "^2.6.3"
 
 [[tool.poetry.source]]
 name = "torch"
