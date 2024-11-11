@@ -6,7 +6,7 @@ authors = ["conan.jung"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.10"
 langchain = "^0.2.5"
 torch = {version = "^2.4.0+cu121", source = "torch"}
 torchvision = {version = "^0.19.0+cu121", source = "torch"}
