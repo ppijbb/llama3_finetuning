@@ -1,0 +1,2 @@
+pip install -r lightning/requirements.txt --upgrade
+MAX_JOBS=8 pip install flash-attn --no-build-isolation
