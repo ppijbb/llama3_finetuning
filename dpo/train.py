@@ -1,13 +1,13 @@
 import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import BitsAndBytesConfig
 from trl import DPOConfig, DPOTrainer  # DPOTrainer 사용
 from trl import CPOConfig, CPOTrainer  # CPOTrainer 사용
 from peft import LoraConfig, LoHaConfig, get_peft_model
 import bitsandbytes as bnb
 from data_module import get_dataset
 # from unsloth import FastLanguageModel
-
 
 # wandb 설정
 os.environ["WANDB_PROJECT"]="LLM_DPO"
@@ -31,11 +31,19 @@ Model ID: {model_id}
 Method : {os.environ.get("RLHF_METHOD")} (default: DPO)
 --------------------
 ''')
+
 model = AutoModelForCausalLM.from_pretrained(
         model_id,
         torch_dtype=torch.bfloat16,
         trust_remote_code=True,
         load_in_4bit=False,
+        quantization_config=BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_quant_type="nf4",
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_use_double_quant=True,
+        ),
+        device_map={"": 0},
         return_dict=True)
 tokenizer = AutoTokenizer.from_pretrained(
         model_id,
@@ -73,7 +81,7 @@ peft_config= LoraConfig( # Lora 설정 정의
     target_modules=lora_targets,
     r=8,
     lora_alpha=32,
-    lora_dropout=0.0,
+    lora_dropout=0.05,
     bias="none",
     # init_lora_weights="gaussian",
     task_type="CAUSAL_LM")
@@ -97,18 +105,19 @@ peft_config= LoraConfig( # Lora 설정 정의
 #     use_gradient_checkpointing=True,
 #     random_state=3407,
 # )
-
 match os.environ.get("RLHF_METHOD", "DPO"):
     case "DPO":
         # DPO 설정 정의
         dpo_config = DPOConfig(
             beta=0.1,
-            loss_type="ipo",
+            # loss_type="ipo",
             max_prompt_length=256,
             max_target_length=max_seq_len,
             max_length=max_seq_len,
-            fp16=False,
-            bf16=True,
+            fp16=True,
+            bf16=False,
+            tf32=False,
+            eval_strategy="steps",
             # fp16_full_eval=True,
             # bf16_full_eval=False,
             output_dir="dpo_output",
@@ -158,8 +167,9 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             max_prompt_length=256,
             # max_target_length=max_seq_len,
             max_length=max_seq_len,
-            fp16=False,
-            bf16=True,
+            fp16=True,
+            bf16=False,
+            tf32=False,
             # fp16_full_eval=True,
             # bf16_full_eval=False,
             output_dir="cpo_output",
@@ -200,7 +210,6 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
         )
-
 
 
 # DPO를 사용하여 모델 학습
