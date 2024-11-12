@@ -3,11 +3,13 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers import BitsAndBytesConfig
 from trl import DPOConfig, DPOTrainer  # DPOTrainer 사용
-from trl import CPOConfig, CPOTrainer  # CPOTrainer 사용
+from trl import CPOConfig,CPOTrainer  # CPOTrainer 사용
 from peft import LoraConfig, LoHaConfig, get_peft_model
 import bitsandbytes as bnb
 from data_module import get_dataset
 # from unsloth import FastLanguageModel
+
+from trainer_module import TrainerDebugCallback
 
 # wandb 설정
 os.environ["WANDB_PROJECT"]="LLM_DPO"
@@ -22,7 +24,7 @@ os.environ["WANDB_WATCH"]="0"
 # 모델과 토크나이저 불러오기
 model_id = "Gunulhona/Llama-Agent-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
-max_seq_len = 1024
+max_seq_len = 8192
 batch_per_device = 1
 
 print(f'''
@@ -34,13 +36,13 @@ Method : {os.environ.get("RLHF_METHOD")} (default: DPO)
 
 model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=torch.float16,
         trust_remote_code=True,
         load_in_4bit=False,
         quantization_config=BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_compute_dtype=torch.float16,
                 bnb_4bit_use_double_quant=True,
         ),
         device_map={"": 0},
@@ -65,11 +67,11 @@ lora_targets=[
         "k_proj",
         # "down_proj",
         # "gate_proj",
-        "q_proj",
+        # "q_proj",
         "v_proj",
         # "up_proj",
         # "down_proj",
-        "o_proj"
+        # "o_proj"
     ]
 
 # 참조 모델 불러오기 (필요에 따라 수정)
@@ -92,7 +94,10 @@ peft_config= LoraConfig( # Lora 설정 정의
 #     alpha=32,
 #     task_type="CAUSAL_LM"
 # )
-# model = get_peft_model(model, peft_config)
+model = get_peft_model(
+    model=model,
+    mixed=False,
+    peft_config=peft_config)
 
 # model = FastLanguageModel.get_peft_model(
 #     model=model,
@@ -114,6 +119,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             max_prompt_length=256,
             max_target_length=max_seq_len,
             max_length=max_seq_len,
+          # trainer options 
             fp16=True,
             bf16=False,
             tf32=False,
@@ -132,6 +138,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             per_device_train_batch_size=batch_per_device,
             per_gpu_eval_batch_size=batch_per_device,
             per_gpu_train_batch_size=batch_per_device,
+            lr_scheduler_type="cosine_with_restarts",  #linear, polynomial, reduce_on_plateau, cosine_with_restarts
         )
 
         # BitsandBytes Paged AdamW Optimizer 설정
@@ -157,6 +164,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             peft_config=peft_config,
             # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
+            callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
         )
     case "SIMPO":
         # CPO 설정 정의
@@ -184,6 +192,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             per_device_train_batch_size=batch_per_device,
             per_gpu_eval_batch_size=batch_per_device,
             per_gpu_train_batch_size=batch_per_device,
+            lr_scheduler_type="cosine_with_restarts",  #linear, polynomial, reduce_on_plateau, cosine_with_restarts
         )
 
         # BitsandBytes Paged AdamW Optimizer 설정
@@ -209,6 +218,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             peft_config=peft_config,
             # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
+            callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
         )
 
 
