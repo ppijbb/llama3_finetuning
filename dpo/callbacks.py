@@ -14,9 +14,7 @@ class TrainerDebugCallback(TrainerCallback):
     
     def on_step_end(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
         # print(f"Finished step {state.global_step}")
-        
-        test_input = [{"role": "user", "content": "What is the capital of France?"}]
-
+        # test_input = [{"role": "user", "content": "What is the capital of France?"}]
         # with torch.inference_mode():
         #     print(
         #         self.tokenizer.decode(
@@ -34,7 +32,7 @@ class TrainerDebugCallback(TrainerCallback):
         #             )
         #         )
         pass
-        
+    
     def on_epoch_begin(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
         # print(f"Starting epoch {state.epoch}")
         pass
@@ -47,3 +45,22 @@ class TrainerDebugCallback(TrainerCallback):
         _ = logs.pop("total_flos", None)
         if state.is_local_process_zero:
             print(logs)
+            
+    def on_prediction_step(self, args: TrainingArguments, state: TrainerState, control: TrainerControl):
+        test_input = [{"role": "user", "content": "What is the capital of France?"}]
+        with torch.inference_mode():
+            print(
+                self.tokenizer.decode(
+                    self.model.generate(
+                        input_ids=self.tokenizer.apply_chat_template(
+                            test_input, 
+                            tokenize=True, 
+                            add_generation_prompt=True,
+                            return_tensors="pt"),
+                        do_sample=True, 
+                        temperature=0.3,
+                        max_length=128
+                        )[0],
+                    skip_special_tokens=True
+                    )
+                )

@@ -57,7 +57,7 @@ tokenizer = AutoTokenizer.from_pretrained(
         model_id,
         trust_remote_code=True,
         use_fast=True)
-
+model.config.use_cache = False
 # model, tokenizer = FastLanguageModel.from_pretrained(
 #     model_name = model_id,
 #     trust_remote_code=True,
@@ -136,11 +136,12 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # bf16_full_eval=False,
             output_dir="dpo_output",
             optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
-            logging_steps=5,
+            logging_steps=100,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
             dataset_num_proc=8,
             report_to="wandb",
+            use_legacy_prediction_loop=True,
             per_device_eval_batch_size=batch_per_device,
             per_device_train_batch_size=batch_per_device,
             per_gpu_eval_batch_size=batch_per_device,
@@ -192,11 +193,12 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # bf16_full_eval=False,
             output_dir="cpo_output",
             optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
-            logging_steps=50,
+            logging_steps=100,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
             dataset_num_proc=8,
             report_to="wandb",
+            use_legacy_prediction_loop=True,
             per_device_eval_batch_size=batch_per_device,
             per_device_train_batch_size=batch_per_device,
             per_gpu_eval_batch_size=batch_per_device,
