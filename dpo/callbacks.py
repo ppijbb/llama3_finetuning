@@ -17,22 +17,22 @@ class TrainerDebugCallback(TrainerCallback):
         
         test_input = [{"role": "user", "content": "What is the capital of France?"}]
 
-        with torch.inference_mode():
-            print(
-                self.tokenizer.decode(
-                    self.model.generate(
-                        input_ids=self.tokenizer.apply_chat_template(
-                            test_input, 
-                            tokenize=True, 
-                            add_generation_prompt=True,
-                            return_tensors="pt"),
-                        do_sample=True, 
-                        temperature=0.3,
-                        max_length=128
-                        )[0],
-                    skip_special_tokens=True
-                    )
-                )
+        # with torch.inference_mode():
+        #     print(
+        #         self.tokenizer.decode(
+        #             self.model.generate(
+        #                 input_ids=self.tokenizer.apply_chat_template(
+        #                     test_input, 
+        #                     tokenize=True, 
+        #                     add_generation_prompt=True,
+        #                     return_tensors="pt"),
+        #                 do_sample=True, 
+        #                 temperature=0.3,
+        #                 max_length=128
+        #                 )[0],
+        #             skip_special_tokens=True
+        #             )
+        #         )
         pass
         
     def on_epoch_begin(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):

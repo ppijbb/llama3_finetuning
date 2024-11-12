@@ -26,6 +26,8 @@ model_id = "Gunulhona/Llama-Agent-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
 max_seq_len = 8192
 batch_per_device = 1
+max_epochs = 10
+lr = 3e-5 # default 1e-6
 
 print(f'''
 --------------------
@@ -42,10 +44,14 @@ model = AutoModelForCausalLM.from_pretrained(
         quantization_config=BitsAndBytesConfig(
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_compute_dtype=torch.half,
+                bnb_4bit_quant_storage=torch.uint8,
                 bnb_4bit_use_double_quant=True,
         ),
-        device_map={"": 0},
+        device_map="auto",
+        low_cpu_mem_usage=True,
+        use_flash_attention_2=False,
+        # attn_implementation="eager",
         return_dict=True)
 tokenizer = AutoTokenizer.from_pretrained(
         model_id,
@@ -119,6 +125,8 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             max_prompt_length=256,
             max_target_length=max_seq_len,
             max_length=max_seq_len,
+            learning_rate=lr,
+            num_train_epochs=max_epochs,
           # trainer options 
             fp16=True,
             bf16=False,
@@ -128,8 +136,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # bf16_full_eval=False,
             output_dir="dpo_output",
             optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
-            logging_steps=50,
-            num_train_epochs=50,
+            logging_steps=5,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
             dataset_num_proc=8,
@@ -158,10 +165,11 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             args=dpo_config,
             # data_callator=,
             train_dataset=dataset["train"],  # 학습 데이터셋
-            eval_dataset=dataset["test"],  # 학습 데이터셋
+            eval_dataset=dataset["test"].select(range(50)),  # 학습 데이터셋
             tokenizer=tokenizer,
             # processing_class=tokenizer,
             peft_config=peft_config,
+            generate_during_eval=True,
             # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
             callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
@@ -173,7 +181,9 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             loss_type="simpo", # SimPO Loss
             cpo_alpha=0.5, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
             max_prompt_length=256,
-            # max_target_length=max_seq_len,
+            learning_rate=lr,
+            num_train_epochs=max_epochs,            
+          # trainer options 
             max_length=max_seq_len,
             fp16=True,
             bf16=False,
@@ -183,7 +193,6 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             output_dir="cpo_output",
             optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
             logging_steps=50,
-            num_train_epochs=50,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
             dataset_num_proc=8,
@@ -212,7 +221,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             args=cpo_config,
             # data_callator=,
             train_dataset=dataset["train"],  # 학습 데이터셋
-            eval_dataset=dataset["test"],  # 학습 데이터셋
+            eval_dataset=dataset["test"].select(range(50)),  # 학습 데이터셋
             tokenizer=tokenizer,
             # processing_class=tokenizer,
             peft_config=peft_config,
