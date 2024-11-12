@@ -9,7 +9,7 @@ import bitsandbytes as bnb
 from data_module import get_dataset
 # from unsloth import FastLanguageModel
 
-from trainer_module import TrainerDebugCallback
+from callbacks import TrainerDebugCallback
 
 # wandb 설정
 os.environ["WANDB_PROJECT"]="LLM_DPO"

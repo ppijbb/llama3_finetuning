@@ -29,7 +29,8 @@ class TrainerDebugCallback(TrainerCallback):
                         do_sample=True, 
                         temperature=0.3,
                         max_length=128
-                        )
+                        )[0],
+                    skip_special_tokens=True
                     )
                 )
         pass
