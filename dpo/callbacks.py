@@ -46,7 +46,8 @@ class TrainerDebugCallback(TrainerCallback):
         if state.is_local_process_zero:
             print(logs)
             
-    def on_prediction_step(self, args: TrainingArguments, state: TrainerState, control: TrainerControl):
+    def on_prediction_step(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
+        print(kwargs["model"], kwargs["processing_class"])
         test_input = [{"role": "user", "content": "What is the capital of France?"}]
         with torch.inference_mode():
             print(
