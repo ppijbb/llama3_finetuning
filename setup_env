@@ -1,3 +1,5 @@
 pip install -r lightning/requirements.txt --upgrade
 MAX_JOBS=8 pip install flash-attn --no-build-isolation
 python -m bitsandbytes
+git clone https://github.com/kongds/MoRA.git
+cd MoRA && pip install -e ./peft-mora
