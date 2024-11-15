@@ -4,10 +4,11 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers import BitsAndBytesConfig
 from trl import DPOConfig, DPOTrainer  # DPOTrainer 사용
 from trl import CPOConfig,CPOTrainer  # CPOTrainer 사용
-from peft import LoraConfig, LoHaConfig, get_peft_model
+from peft import LoraConfig, get_peft_model
 import bitsandbytes as bnb
 from data_module import get_dataset
 # from unsloth import FastLanguageModel
+from accelerate import PartialState
 
 from callbacks import TrainerDebugCallback
 
@@ -45,10 +46,14 @@ model = AutoModelForCausalLM.from_pretrained(
                 load_in_4bit=True,
                 bnb_4bit_quant_type="nf4",
                 bnb_4bit_compute_dtype=torch.half,
-                bnb_4bit_quant_storage=torch.uint8,
+                bnb_4bit_quant_storage=torch.half,
                 bnb_4bit_use_double_quant=True,
         ),
-        device_map="auto",
+        # device_map="auto",
+        device_map={
+            "": PartialState().process_index
+            # "": torch.cuda.current_device()
+            },
         low_cpu_mem_usage=True,
         use_flash_attention_2=False,
         # attn_implementation="eager",

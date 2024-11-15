@@ -7,8 +7,8 @@ NCCL_P2P_DISABLE=1
 NCCL_IB_DISABLE=1
 
 
-huggingface-cli login --token $HF_SECRET_KEY
-wandb login --relogin $WANDB_API_KEY
+# huggingface-cli login --token $HF_SECRET_KEY
+# wandb login --relogin $WANDB_API_KEY
 
 accelerate launch \
     --config_file accelerate_config.yaml \
