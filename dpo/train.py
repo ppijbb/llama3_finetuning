@@ -229,8 +229,8 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # data_callator=,
             train_dataset=dataset["train"],  # 학습 데이터셋
             eval_dataset=dataset["test"].select(range(50)),  # 학습 데이터셋
-            tokenizer=tokenizer,
-            # processing_class=tokenizer,
+            # tokenizer=tokenizer,
+            processing_class=tokenizer,
             peft_config=peft_config,
             # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),

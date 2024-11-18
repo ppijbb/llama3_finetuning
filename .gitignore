@@ -1,6 +1,7 @@
 *.log
 *_log
 __pycache__
+*/__pycache__
 wandb
 trainer_start
 LLM-Finetuning/
