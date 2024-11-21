@@ -25,7 +25,7 @@ os.environ["WANDB_WATCH"]="0"
 # 모델과 토크나이저 불러오기
 model_id = "Gunulhona/Gemma-Ko-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
-max_seq_len = 4096
+max_seq_len = 1024
 batch_per_device = 1
 max_epochs = 10
 lr = 3e-5 # default 1e-6
@@ -41,9 +41,11 @@ model = AutoModelForCausalLM.from_pretrained(
         model_id,
         torch_dtype=torch.float16,
         trust_remote_code=True,
-        load_in_4bit=False,
+        # load_in_4bit=True,
         quantization_config=BitsAndBytesConfig(
             load_in_4bit=True,
+            llm_int8_threshold=6.0,
+            llm_int8_has_fp16_weight=False,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.half,
             bnb_4bit_quant_storage=torch.uint8,
@@ -75,15 +77,14 @@ model.config.use_cache = False
 # )
 
 lora_targets=[
-        "k_proj",
-        # "down_proj",
-        # "gate_proj",
-        # "q_proj",
-        "v_proj",
-        # "up_proj",
-        # "down_proj",
-        # "o_proj"
-    ]
+    "k_proj",
+    "v_proj",
+    "down_proj",
+    "gate_proj",
+    "up_proj",
+    "q_proj",
+    "o_proj"
+  ]
 
 # 참조 모델 불러오기 (필요에 따라 수정)
 # ref_model = model
@@ -92,10 +93,10 @@ lora_targets=[
 # Lora를 기본 모델에 적용
 peft_config= LoraConfig( # Lora 설정 정의
     use_mora=True,  # Mora Config
-    mora_type=6,
+    mora_type=5,
     target_modules=lora_targets,
     r=128,
-    lora_alpha=32,
+    lora_alpha=128,
     lora_dropout=0.05,
     bias="none",
     # init_lora_weights="gaussian",
@@ -130,6 +131,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             beta=0.1,
             # loss_type="ipo",
             max_prompt_length=256,
+            max_steps=1000,
             max_target_length=max_seq_len,
             max_length=max_seq_len,
             learning_rate=lr,
@@ -188,6 +190,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             loss_type="simpo", # SimPO Loss
             cpo_alpha=0.5, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
             max_prompt_length=256,
+            max_steps=1000,
             learning_rate=lr,
             num_train_epochs=max_epochs,            
           # trainer options 
