@@ -23,9 +23,9 @@ os.environ["WANDB_WATCH"]="0"
 
 
 # 모델과 토크나이저 불러오기
-model_id = "Gunulhona/Llama-Agent-Merge"
+model_id = "Gunulhona/Gemma-Ko-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
-max_seq_len = 8192
+max_seq_len = 4096
 batch_per_device = 1
 max_epochs = 10
 lr = 3e-5 # default 1e-6
@@ -43,11 +43,11 @@ model = AutoModelForCausalLM.from_pretrained(
         trust_remote_code=True,
         load_in_4bit=False,
         quantization_config=BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.half,
-                bnb_4bit_quant_storage=torch.half,
-                bnb_4bit_use_double_quant=True,
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.half,
+            bnb_4bit_quant_storage=torch.uint8,
+            bnb_4bit_use_double_quant=True,
         ),
         # device_map="auto",
         device_map={
@@ -91,8 +91,10 @@ lora_targets=[
 
 # Lora를 기본 모델에 적용
 peft_config= LoraConfig( # Lora 설정 정의
+    use_mora=True,  # Mora Config
+    mora_type=6,
     target_modules=lora_targets,
-    r=8,
+    r=128,
     lora_alpha=32,
     lora_dropout=0.05,
     bias="none",
@@ -175,7 +177,6 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             tokenizer=tokenizer,
             # processing_class=tokenizer,
             peft_config=peft_config,
-            generate_during_eval=True,
             # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
             callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
