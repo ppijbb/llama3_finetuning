@@ -8,44 +8,83 @@
         "min_loss_scale": 1
     },
     "optimizer": {
-        "type": "AdamW",
+        "type": "Adam",
         "params": {
             "lr": "auto",
             "weight_decay": "auto"
         }
     },
-    "scheduler": {
-        "type": "WarmupDecayLR",
-        "params": {
-            "warmup_min_lr": "auto",
-            "warmup_max_lr": "auto",
-            "warmup_num_steps": "auto",
-            "total_num_steps": "auto"
-        }
-    },
+    "offload_param": {
+        "device": "cpu",
+        "pin_memory": false,
+        "buffer_count": 5,
+        "buffer_size": 1e8,
+        "max_in_cpu": 1e9
+      },
     "zero_optimization": {
         "stage": 3,
         "offload_optimizer": {
             "device": "cpu",
-            "pin_memory": true
+            "pin_memory": false
         },
         "offload_param": {
             "device": "cpu",
-            "pin_memory": true
+            "pin_memory": false
         },
         "overlap_comm": true,
         "contiguous_gradients": true,
-        "reduce_bucket_size": "auto",
-        "stage3_prefetch_bucket_size": "auto",
-        "stage3_param_persistence_threshold": "auto",
-        "sub_group_size": 1e9,
-        "stage3_max_live_parameters": 1e9,
-        "stage3_max_reuse_distance": 1e9,
+        "allgather_bucket_size": 5e8,
+        "reduce_bucket_size": 5e8,
+        "zero_hpz_partition_size": 1,
+        "zero_quantized_weights": false,
+        "zero_quantized_gradients": false,
+        "stage3_param_persistence_threshold": 1e6,
+        "sub_group_size": 1e12,
+        "stage3_prefetch_bucket_size": 1e12,
+        "stage3_max_live_parameters": 1e12,
+        "stage3_max_reuse_distance": 1e12,
         "stage3_gather_16bit_weights_on_model_save": "auto"
+    },
+    "compression_training": {
+        "sparse_pruning":{
+            "shared_parameters":{
+              "enabled": true,
+              "schedule_offset": 30,
+              "method": "l1"
+            },
+            "different_groups":{
+              "sp1": {
+                "params": {
+                    "dense_ratio": 0.5
+                },
+                "modules": [
+                    "attention.self"
+                    ]
+                }
+            }
+        },
+        "activation_quantization": {
+            "shared_parameters":{
+                "enabled": true,
+                "quantization_type": "asymmetric",
+                "range_calibration": "dynamic",
+                "schedule_offset": 50
+                },
+            "different_groups":{
+                "aq1": {
+                    "params": {
+                        "bits": 8
+                    },
+                    "modules": [
+                        "attention.output"
+                    ]
+                }    
+            }
+        }
     },
     "gradient_accumulation_steps": "auto",
     "gradient_clipping": "auto",
-    "steps_per_print": 2000,
+    "steps_per_print": 1000,
     "train_batch_size": "auto",
     "train_micro_batch_size_per_gpu": "auto",
     "wall_clock_breakdown": false

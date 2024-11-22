@@ -25,7 +25,7 @@ os.environ["WANDB_WATCH"]="0"
 # 모델과 토크나이저 불러오기
 model_id = "Gunulhona/Gemma-Ko-Merge"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
-max_seq_len = 1024
+max_seq_len = 256
 batch_per_device = 1
 max_epochs = 10
 lr = 3e-5 # default 1e-6
@@ -93,9 +93,9 @@ lora_targets=[
 # Lora를 기본 모델에 적용
 peft_config= LoraConfig( # Lora 설정 정의
     use_mora=True,  # Mora Config
-    mora_type=5,
+    mora_type=6,
     target_modules=lora_targets,
-    r=128,
+    r=64,
     lora_alpha=128,
     lora_dropout=0.05,
     bias="none",
@@ -130,7 +130,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
         dpo_config = DPOConfig(
             beta=0.1,
             # loss_type="ipo",
-            max_prompt_length=256,
+            # max_prompt_length=256,
             max_steps=1000,
             max_target_length=max_seq_len,
             max_length=max_seq_len,
@@ -144,7 +144,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # fp16_full_eval=True,
             # bf16_full_eval=False,
             output_dir="dpo_output",
-            optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
+            # optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
             logging_steps=100,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
@@ -183,13 +183,14 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
             callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
         )
+
     case "SIMPO":
         # CPO 설정 정의
         cpo_config = CPOConfig(
             beta=0.1,
             loss_type="simpo", # SimPO Loss
             cpo_alpha=0.5, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
-            max_prompt_length=256,
+            # max_prompt_length=256,
             max_steps=1000,
             learning_rate=lr,
             num_train_epochs=max_epochs,            
@@ -201,7 +202,7 @@ match os.environ.get("RLHF_METHOD", "DPO"):
             # fp16_full_eval=True,
             # bf16_full_eval=False,
             output_dir="cpo_output",
-            optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
+            # optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
             logging_steps=100,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
