@@ -23,9 +23,11 @@ os.environ["WANDB_WATCH"]="0"
 
 
 # 모델과 토크나이저 불러오기
+# model_id = "AIChenKai/TinyLlama-1.1B-Chat-v1.0-x2-MoE"
 model_id = "Gunulhona/Gemma-Ko-Merge"
+
 # model_id = "microsoft/Phi-3.5-mini-instruct"
-max_seq_len = 256
+max_seq_len = 4096
 batch_per_device = 1
 max_epochs = 10
 lr = 3e-5 # default 1e-6
@@ -41,24 +43,23 @@ model = AutoModelForCausalLM.from_pretrained(
         model_id,
         torch_dtype=torch.float16,
         trust_remote_code=True,
-        # load_in_4bit=True,
         quantization_config=BitsAndBytesConfig(
             load_in_4bit=True,
             llm_int8_threshold=6.0,
             llm_int8_has_fp16_weight=False,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.half,
-            bnb_4bit_quant_storage=torch.uint8,
-            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            # bnb_4bit_quant_storage=torch.float16,
+            # bnb_4bit_use_double_quant=True,
         ),
-        # device_map="auto",
-        device_map={
-            "": PartialState().process_index
-            # "": torch.cuda.current_device()
-            },
+        device_map="auto",
+        # device_map={
+        #     "": PartialState().process_index
+        #     # "": torch.cuda.current_device()
+        # },
         low_cpu_mem_usage=True,
         use_flash_attention_2=False,
-        # attn_implementation="eager",
+        attn_implementation="eager",
         return_dict=True)
 tokenizer = AutoTokenizer.from_pretrained(
         model_id,
@@ -77,14 +78,15 @@ model.config.use_cache = False
 # )
 
 lora_targets=[
-    "k_proj",
-    "v_proj",
-    "down_proj",
-    "gate_proj",
-    "up_proj",
-    "q_proj",
-    "o_proj"
-  ]
+    'q_proj',
+    # 'k_proj',
+    'v_proj',
+    # 'o_proj',
+    # 'gate_proj',
+    # 'down_proj',
+    # 'up_proj',
+    # 'lm_head'
+    ]
 
 # 참조 모델 불러오기 (필요에 따라 수정)
 # ref_model = model
@@ -92,8 +94,8 @@ lora_targets=[
 
 # Lora를 기본 모델에 적용
 peft_config= LoraConfig( # Lora 설정 정의
-    use_mora=True,  # Mora Config
-    mora_type=6,
+    # use_mora=True,  # Mora Config
+    # mora_type=6,
     target_modules=lora_targets,
     r=64,
     lora_alpha=128,
