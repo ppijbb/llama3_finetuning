@@ -12,19 +12,21 @@ from accelerate import PartialState
 
 from callbacks import TrainerDebugCallback
 
+# training method 설정
+rlhf_method = os.environ.get("RLHF_METHOD", "DPO")
+
+# 모델과 토크나이저 불러오기
+# model_id = "AIChenKai/TinyLlama-1.1B-Chat-v1.0-x2-MoE"
+model_id = "Gunulhona/Gemma-Ko-Merge"
+
 # wandb 설정
-os.environ["WANDB_PROJECT"]="LLM_DPO"
+os.environ["WANDB_PROJECT"]=f"{model_id.split('/')[1]}-{rlhf_method}"
 
 # save your trained model checkpoint to wandb
 os.environ["WANDB_LOG_MODEL"]="checkpoint"
 
 # turn off watch to log faster
 os.environ["WANDB_WATCH"]="0"
-
-
-# 모델과 토크나이저 불러오기
-# model_id = "AIChenKai/TinyLlama-1.1B-Chat-v1.0-x2-MoE"
-model_id = "Gunulhona/Gemma-Ko-Merge"
 
 # model_id = "microsoft/Phi-3.5-mini-instruct"
 max_seq_len = 4096
@@ -52,11 +54,11 @@ model = AutoModelForCausalLM.from_pretrained(
             # bnb_4bit_quant_storage=torch.float16,
             # bnb_4bit_use_double_quant=True,
         ),
-        device_map="auto",
-        # device_map={
-        #     "": PartialState().process_index
-        #     # "": torch.cuda.current_device()
-        # },
+        # device_map="auto",
+        device_map={
+            "": PartialState().process_index
+            # "": torch.cuda.current_device()
+        },
         low_cpu_mem_usage=True,
         use_flash_attention_2=False,
         attn_implementation="eager",
@@ -126,7 +128,7 @@ model = get_peft_model(
 #     use_gradient_checkpointing=True,
 #     random_state=3407,
 # )
-match os.environ.get("RLHF_METHOD", "DPO"):
+match rlhf_method:
     case "DPO":
         # DPO 설정 정의
         dpo_config = DPOConfig(
