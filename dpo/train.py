@@ -16,8 +16,9 @@ from callbacks import TrainerDebugCallback
 rlhf_method = os.environ.get("RLHF_METHOD", "DPO")
 
 # 모델과 토크나이저 불러오기
-# model_id = "AIChenKai/TinyLlama-1.1B-Chat-v1.0-x2-MoE"
-model_id = "Gunulhona/Gemma-Ko-Merge"
+model_id = "AIChenKai/TinyLlama-1.1B-Chat-v1.0-x2-MoE"
+# model_id = "Gunulhona/Gemma-Ko-Merge"
+deepspeed_config = "ds_config.json"
 
 # wandb 설정
 os.environ["WANDB_PROJECT"]=f"{model_id.split('/')[1]}-{rlhf_method}"
@@ -47,14 +48,14 @@ model = AutoModelForCausalLM.from_pretrained(
         trust_remote_code=True,
         quantization_config=BitsAndBytesConfig(
             load_in_4bit=True,
+            load_in_8bit=False,
             llm_int8_threshold=6.0,
-            llm_int8_has_fp16_weight=False,
+            llm_int8_has_fp16_weight=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=torch.float16,
-            # bnb_4bit_quant_storage=torch.float16,
-            # bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_storage=torch.uint8,
+            bnb_4bit_use_double_quant=True,
         ),
-        # device_map="auto",
         device_map={
             "": PartialState().process_index
             # "": torch.cuda.current_device()
@@ -81,12 +82,12 @@ model.config.use_cache = False
 
 lora_targets=[
     'q_proj',
-    # 'k_proj',
-    'v_proj',
-    # 'o_proj',
-    # 'gate_proj',
-    # 'down_proj',
-    # 'up_proj',
+    # 'k_proj', 
+    # 'v_proj',
+    'o_proj',
+    'gate_proj',
+    'down_proj',
+    'up_proj',
     # 'lm_head'
     ]
 
@@ -95,12 +96,12 @@ lora_targets=[
 
 
 # Lora를 기본 모델에 적용
-peft_config= LoraConfig( # Lora 설정 정의
-    # use_mora=True,  # Mora Config
-    # mora_type=6,
+peft_config = LoraConfig( # Lora 설정 정의
+    use_mora=True,  # Mora Config
+    mora_type=6,
     target_modules=lora_targets,
-    r=64,
-    lora_alpha=128,
+    r=1024,
+    lora_alpha=32,
     lora_dropout=0.05,
     bias="none",
     # init_lora_weights="gaussian",
@@ -154,6 +155,7 @@ match rlhf_method:
             generate_during_eval=True,
             dataset_num_proc=8,
             report_to="wandb",
+            deepspeed=deepspeed_config,
             use_legacy_prediction_loop=True,
             per_device_eval_batch_size=batch_per_device,
             per_device_train_batch_size=batch_per_device,
@@ -183,7 +185,6 @@ match rlhf_method:
             tokenizer=tokenizer,
             # processing_class=tokenizer,
             peft_config=peft_config,
-            # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
             callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
         )
@@ -212,6 +213,7 @@ match rlhf_method:
             generate_during_eval=True,
             dataset_num_proc=8,
             report_to="wandb",
+            deepspeed=deepspeed_config,
             use_legacy_prediction_loop=True,
             per_device_eval_batch_size=batch_per_device,
             per_device_train_batch_size=batch_per_device,
@@ -241,7 +243,6 @@ match rlhf_method:
             # tokenizer=tokenizer,
             processing_class=tokenizer,
             peft_config=peft_config,
-            # deepspeed=deepspeed_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
             callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
         )
