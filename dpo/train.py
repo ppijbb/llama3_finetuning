@@ -16,8 +16,8 @@ from callbacks import TrainerDebugCallback
 rlhf_method = os.environ.get("RLHF_METHOD", "DPO")
 
 # 모델과 토크나이저 불러오기
-model_id = "AIChenKai/TinyLlama-1.1B-Chat-v1.0-x2-MoE"
-# model_id = "Gunulhona/Gemma-Ko-Merge"
+# model_id = "AIChenKai/TinyLlama-1.1B-Chat-v1.0-x2-MoE"
+model_id = "Gunulhona/Gemma-System-9B"
 deepspeed_config = "ds_config.json"
 
 # wandb 설정
@@ -46,16 +46,16 @@ model = AutoModelForCausalLM.from_pretrained(
         model_id,
         torch_dtype=torch.float16,
         trust_remote_code=True,
-        quantization_config=BitsAndBytesConfig(
-            load_in_4bit=True,
-            load_in_8bit=False,
-            llm_int8_threshold=6.0,
-            llm_int8_has_fp16_weight=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
-            bnb_4bit_quant_storage=torch.uint8,
-            bnb_4bit_use_double_quant=True,
-        ),
+        # quantization_config=BitsAndBytesConfig(
+        #     load_in_4bit=False,
+        #     load_in_8bit=False,
+        #     # llm_int8_threshold=6.0,
+        #     # llm_int8_has_fp16_weight=True,
+        #     bnb_4bit_quant_type="nf4",
+        #     bnb_4bit_compute_dtype=torch.float16,
+        #     # bnb_4bit_quant_storage=torch.uint8,
+        #     bnb_4bit_use_double_quant=True,
+        # ),
         device_map={
             "": PartialState().process_index
             # "": torch.cuda.current_device()
@@ -82,8 +82,8 @@ model.config.use_cache = False
 
 lora_targets=[
     'q_proj',
-    # 'k_proj', 
-    # 'v_proj',
+    'k_proj', 
+    'v_proj',
     'o_proj',
     'gate_proj',
     'down_proj',
@@ -100,8 +100,8 @@ peft_config = LoraConfig( # Lora 설정 정의
     use_mora=True,  # Mora Config
     mora_type=6,
     target_modules=lora_targets,
-    r=1024,
-    lora_alpha=32,
+    r=256,
+    lora_alpha=16,
     lora_dropout=0.05,
     bias="none",
     # init_lora_weights="gaussian",
@@ -150,7 +150,8 @@ match rlhf_method:
             # bf16_full_eval=False,
             output_dir="dpo_output",
             # optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
-            logging_steps=100,
+            gradient_checkpointing=True,
+            logging_steps=20,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
             dataset_num_proc=8,
@@ -194,7 +195,7 @@ match rlhf_method:
         cpo_config = CPOConfig(
             beta=0.1,
             loss_type="simpo", # SimPO Loss
-            cpo_alpha=0.5, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
+            cpo_alpha=0.0, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
             # max_prompt_length=256,
             max_steps=1000,
             learning_rate=lr,
@@ -208,7 +209,8 @@ match rlhf_method:
             # bf16_full_eval=False,
             output_dir="cpo_output",
             # optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
-            logging_steps=100,
+            gradient_checkpointing=True,
+            logging_steps=20,
             gradient_accumulation_steps=16,
             generate_during_eval=True,
             dataset_num_proc=8,
