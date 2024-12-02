@@ -5,7 +5,7 @@ TORCH_USE_CUDA_DSA=1
 HF_DATASETS_CACHE="/home/conan/.cache/huggingface/datasets"
 NCCL_P2P_DISABLE=1
 NCCL_IB_DISABLE=1
-
+WANDB_LOG_MODEL=false
 
 # huggingface-cli login --token $HF_SECRET_KEY
 # wandb login --relogin $WANDB_API_KEY
