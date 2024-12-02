@@ -44,7 +44,7 @@ Method : {os.environ.get("RLHF_METHOD")} (default: DPO)
 
 model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        torch_dtype=torch.float16,
+        torch_dtype=torch.bfloat16,
         trust_remote_code=True,
         # quantization_config=BitsAndBytesConfig(
         #     load_in_4bit=False,
@@ -142,8 +142,8 @@ match rlhf_method:
             learning_rate=lr,
             num_train_epochs=max_epochs,
           # trainer options 
-            fp16=True,
-            bf16=False,
+            fp16=False,
+            bf16=True,
             tf32=False,
             eval_strategy="steps",
             # fp16_full_eval=True,
@@ -187,7 +187,7 @@ match rlhf_method:
             # processing_class=tokenizer,
             peft_config=peft_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
-            callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
+            callbacks=[TrainerDebugCallback()]  # 여러 콜백을 리스트로 전달 가능
         )
 
     case "SIMPO":
@@ -202,8 +202,8 @@ match rlhf_method:
             num_train_epochs=max_epochs,            
           # trainer options 
             max_length=max_seq_len,
-            fp16=True,
-            bf16=False,
+            fp16=False,
+            bf16=True,
             tf32=False,
             # fp16_full_eval=True,
             # bf16_full_eval=False,
@@ -246,7 +246,7 @@ match rlhf_method:
             processing_class=tokenizer,
             peft_config=peft_config,
             # optimizers=(bnb.optim.PagedAdamW, {"lr": 3e-5}),
-            callbacks=[TrainerDebugCallback(model=model, tokenizer=tokenizer)]  # 여러 콜백을 리스트로 전달 가능
+            callbacks=[TrainerDebugCallback()]  # 여러 콜백을 리스트로 전달 가능
         )
 
 
