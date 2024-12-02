@@ -47,17 +47,16 @@ class TrainerDebugCallback(TrainerCallback):
             print(logs)
             
     def on_prediction_step(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, **kwargs):
-        print(kwargs["model"], kwargs["processing_class"])
         test_input = [{"role": "user", "content": "What is the capital of France?"}]
         with torch.inference_mode():
             print(
-                self.tokenizer.decode(
-                    self.model.generate(
-                        input_ids=self.tokenizer.apply_chat_template(
+                kwargs["processing_class"].decode(
+                    kwargs["model"].generate(
+                        input_ids=kwargs["processing_class"].apply_chat_template(
                             test_input, 
                             tokenize=True, 
                             add_generation_prompt=True,
-                            return_tensors="pt"),
+                            return_tensors="pt").to(kwargs["model"].device),
                         do_sample=True, 
                         temperature=0.3,
                         max_length=128
