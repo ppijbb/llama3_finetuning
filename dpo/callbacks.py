@@ -1,3 +1,4 @@
+from typing import List, Dict, Any
 from transformers import TrainingArguments, TrainerCallback, TrainerState, TrainerControl
 import torch
 
@@ -7,30 +8,31 @@ class TrainerDebugCallback(TrainerCallback):
     #     super().__init__()
     #     self.model = model
     #     self.tokenizer = tokenizer
-        
+    
+    def _eval_generation(self, model:Any, tokenizer:Any, test_input: List[Dict]):
+        with torch.inference_mode():
+            print(
+                tokenizer.decode(
+                    model.generate(
+                        input_ids=tokenizer.apply_chat_template(
+                            test_input, 
+                            tokenize=True, 
+                            add_generation_prompt=True,
+                            return_tensors="pt").to(model.device),
+                        do_sample=False, 
+                        temperature=1.0,
+                        max_length=128
+                        )[0],
+                    skip_special_tokens=True
+                    )
+                )
+
     def on_step_begin(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
         # print(f"Starting step {state.global_step}")
         pass
     
     def on_step_end(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
         # print(f"Finished step {state.global_step}")
-        # test_input = [{"role": "user", "content": "What is the capital of France?"}]
-        # with torch.inference_mode():
-        #     print(
-        #         self.tokenizer.decode(
-        #             self.model.generate(
-        #                 input_ids=self.tokenizer.apply_chat_template(
-        #                     test_input, 
-        #                     tokenize=True, 
-        #                     add_generation_prompt=True,
-        #                     return_tensors="pt"),
-        #                 do_sample=True, 
-        #                 temperature=0.3,
-        #                 max_length=128
-        #                 )[0],
-        #             skip_special_tokens=True
-        #             )
-        #         )
         pass
     
     def on_epoch_begin(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
@@ -40,22 +42,7 @@ class TrainerDebugCallback(TrainerCallback):
     def on_epoch_end(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
         print("Predictions in training step")
         test_input = [{"role": "user", "content": "What is the capital of France?"}]
-        with torch.inference_mode():
-            print(
-                kwargs["processing_class"].decode(
-                    kwargs["model"].generate(
-                        input_ids=kwargs["processing_class"].apply_chat_template(
-                            test_input, 
-                            tokenize=True, 
-                            add_generation_prompt=True,
-                            return_tensors="pt").to(kwargs["model"].device),
-                        do_sample=True, 
-                        temperature=1.0,
-                        max_length=128
-                        )[0],
-                    skip_special_tokens=True
-                    )
-                )
+        self._eval_generation(kwargs["model"], kwargs["processing_class"], test_input)
         pass
         
     def on_log(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, logs=None, **kwargs):
