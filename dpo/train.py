@@ -24,7 +24,7 @@ deepspeed_config = "ds_config.json"
 os.environ["WANDB_PROJECT"]=f"{model_id.split('/')[1]}-{rlhf_method}"
 
 # save your trained model checkpoint to wandb
-os.environ["WANDB_LOG_MODEL"]="checkpoint"
+# os.environ["WANDB_LOG_MODEL"]="checkpoint"
 
 # turn off watch to log faster
 os.environ["WANDB_WATCH"]="0"
@@ -157,7 +157,7 @@ match rlhf_method:
             dataset_num_proc=8,
             report_to="wandb",
             deepspeed=deepspeed_config,
-            use_legacy_prediction_loop=True,
+            use_legacy_prediction_loop=False,
             per_device_eval_batch_size=batch_per_device,
             per_device_train_batch_size=batch_per_device,
             per_gpu_eval_batch_size=batch_per_device,
@@ -216,7 +216,7 @@ match rlhf_method:
             dataset_num_proc=8,
             report_to="wandb",
             deepspeed=deepspeed_config,
-            use_legacy_prediction_loop=True,
+            use_legacy_prediction_loop=False,
             per_device_eval_batch_size=batch_per_device,
             per_device_train_batch_size=batch_per_device,
             per_gpu_eval_batch_size=batch_per_device,
