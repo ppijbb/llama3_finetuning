@@ -211,6 +211,7 @@ match rlhf_method:
             output_dir="cpo_output",
             # optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
             gradient_checkpointing=True,
+            eval_strategy="steps",
             logging_steps=20,
             gradient_accumulation_steps=16,
             generate_during_eval=True,

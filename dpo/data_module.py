@@ -34,16 +34,24 @@ def processing(sample,
     #     "chosen": tokenizer.apply_chat_template([chosen[1]], tokenize=True),
     #     "rejected": tokenizer.apply_chat_template([rejected[1]], tokenize=True),
     #  }
+    
     if any(no_system_template(tokenizer)):
         for sam in sample["chosen"]:
             if sam["role"] == "system":
-                sam["role"] = "user"
+                # sam["role"] = "user"
+                sam["content"] = "You are a good assistant. "+sam["content"]
+            # elif "system" not in sam["role"]:
+            #     sam["role"] = "user
+                
         for sam in sample["prompt"]:
             if sam["role"] == "system":
-                sam["role"] = "user"
+                # sam["role"] = "user"
+                sam["content"] = "You are a good assistant. "+sam["content"]
+                
         for sam in sample["rejected"]:
             if sam["role"] == "system":
-                sam["role"] = "user"
+                # sam["role"] = "user"
+                sam["content"] = "You are a good assistant. "+sam["content"]
         sample["chosen"] = sample["prompt"] + sample["chosen"]
         sample["rejected"] = sample["prompt"] + sample["rejected"]
 
