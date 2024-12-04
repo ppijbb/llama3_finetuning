@@ -1,12 +1,16 @@
 {
     "fp16": {
-        "enabled": true,
+        "enabled": false,
         "auto_cast": false,
         "loss_scale": 0,
         "loss_scale_window": 1000,
         "initial_scale_power": 16,
         "hysteresis": 2,
+        "consecutive_hysteresis": false,
         "min_loss_scale": 1
+    },
+    "bf16": {
+        "enabled": true
     },
     "optimizer": {
         "type": "AdamW",
@@ -17,23 +21,8 @@
             "eps": 1e-08
         }
     },
-    "offload_param": {
-        "device": "cpu",
-        "pin_memory": false,
-        "buffer_count": 5,
-        "buffer_size": 1e8,
-        "max_in_cpu": 1e9
-      },
     "zero_optimization": {
         "stage": 3,
-        "offload_optimizer": {
-            "device": "cpu",
-            "pin_memory": true
-        },
-        "offload_param": {
-            "device": "cpu",
-            "pin_memory": true
-        },
         "overlap_comm": true,
         "contiguous_gradients": true,
         "allgather_bucket_size": 5e8,
@@ -51,9 +40,9 @@
     "compression_training": {
         "sparse_pruning":{
             "shared_parameters":{
-              "enabled": true,
-              "schedule_offset": 30,
-              "schedule_offset_end": 90,
+              "enabled": false,
+              "schedule_offset": 0,
+              "schedule_offset_end": 0,
               "schedule_offset_stride": 15,
               "method": "l1"
             },
@@ -70,11 +59,11 @@
         },
         "activation_quantization": {
             "shared_parameters":{
-                "enabled": true,
+                "enabled": false,
                 "quantization_type": "asymmetric",
                 "range_calibration": "dynamic",
-                "schedule_offset": 50,
-                "schedule_offset_end": 90,
+                "schedule_offset": 0,
+                "schedule_offset_end": 0,
                 "schedule_offset_stride": 15
                 },
             "different_groups":{

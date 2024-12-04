@@ -32,8 +32,8 @@ os.environ["WANDB_WATCH"]="0"
 # model_id = "microsoft/Phi-3.5-mini-instruct"
 max_seq_len = 4096
 batch_per_device = 1
-max_epochs = 10
-lr = 3e-5 # default 1e-6
+max_epochs = 200
+lr = 5e-7 # default 1e-6
 
 print(f'''
 --------------------
@@ -133,10 +133,10 @@ match rlhf_method:
     case "DPO":
         # DPO 설정 정의
         dpo_config = DPOConfig(
-            beta=0.1,
+            beta=0.01,
             # loss_type="ipo",
             # max_prompt_length=256,
-            max_steps=1000,
+            # max_steps=1000,
             max_target_length=max_seq_len,
             max_length=max_seq_len,
             learning_rate=lr,
@@ -193,11 +193,12 @@ match rlhf_method:
     case "SIMPO":
         # CPO 설정 정의
         cpo_config = CPOConfig(
-            beta=0.1,
+            beta=10.0,
             loss_type="simpo", # SimPO Loss
+            simpo_gamma=0.5,
             cpo_alpha=0.0, # SimPO 학습시 0 으로, CPO-SimPO 학습시 0 이상으로 설정
             # max_prompt_length=256,
-            max_steps=1000,
+            # max_steps=1000,
             learning_rate=lr,
             num_train_epochs=max_epochs,            
           # trainer options 

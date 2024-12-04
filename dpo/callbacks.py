@@ -36,14 +36,14 @@ class TrainerDebugCallback(TrainerCallback):
         pass
     
     def on_epoch_begin(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
-        # print(f"Starting epoch {state.epoch}")
-        pass
+        print(f"Starting epoch {state.epoch}")
+        # pass
         
     def on_epoch_end(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, **kwargs):
-        print("Predictions in training step")
+        print(f"Predictions in epoch {state.epoch}")
         test_input = [{"role": "user", "content": "What is the capital of France?"}]
         self._eval_generation(kwargs["model"], kwargs["processing_class"], test_input)
-        pass
+        # pass
         
     def on_log(self, args:TrainingArguments, state:TrainerState, control:TrainerControl, logs=None, **kwargs):
         _ = logs.pop("total_flos", None)
