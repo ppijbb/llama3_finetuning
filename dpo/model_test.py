@@ -6,10 +6,11 @@ def load_model(model_path, peft_path=None):
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     model = AutoPeftModelForCausalLM.from_pretrained(
-    peft_path,
-    torch_dtype=torch.bfloat16,
-    quantization_config= {"load_in_8bit": True},
-    device_map="auto"
+        peft_path,
+        torch_dtype=torch.bfloat16,
+        quantization_config= {"load_in_8bit": True},
+        device_map="auto",
+        use_safetensors=True,
     )
         
     return model, tokenizer
@@ -32,7 +33,7 @@ def generate_text(prompt, model, tokenizer, max_length=512):
 if __name__ == "__main__":
     # Example usage
     base_model_path = "Gunulhona/Gemma-System-9B"  # e.g. "mistralai/Mistral-7B-v0.1"
-    peft_path = "/home/conan/workspace/llama3_finetuning/dpo/cpo_output/checkpoint-23500"  # Path to your DPO finetuned adapter
+    peft_path = "/home/conan/workspace/llama3_finetuning/dpo/cpo_output/checkpoint-500"  # Path to your DPO finetuned adapter
     
     # Load model
     model, tokenizer = load_model(base_model_path, peft_path)

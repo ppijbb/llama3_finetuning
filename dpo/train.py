@@ -30,7 +30,7 @@ os.environ["WANDB_PROJECT"]=f"{model_id.split('/')[1]}-{rlhf_method}"
 os.environ["WANDB_WATCH"]="0"
 
 # model_id = "microsoft/Phi-3.5-mini-instruct"
-max_seq_len = 4096
+max_seq_len = 65536 # if rope scaling is used, max_seq_len should be 65536
 batch_per_device = 1
 max_epochs = 200
 lr = 5e-7 # default 1e-6
@@ -88,7 +88,7 @@ lora_targets=[
     'gate_proj',
     'down_proj',
     'up_proj',
-    "embed_tokens",
+    # "embed_tokens",
     # 'lm_head'
     ]
 
@@ -100,6 +100,7 @@ lora_targets=[
 peft_config = LoraConfig( # Lora 설정 정의
     use_mora=True,  # Mora Config
     mora_type=6,
+    inference_mode=False,
     target_modules=lora_targets,
     r=256,
     lora_alpha=16,
