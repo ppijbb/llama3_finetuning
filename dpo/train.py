@@ -88,6 +88,7 @@ lora_targets=[
     'gate_proj',
     'down_proj',
     'up_proj',
+    "embed_tokens",
     # 'lm_head'
     ]
 
@@ -148,7 +149,7 @@ match rlhf_method:
             eval_strategy="steps",
             # fp16_full_eval=True,
             # bf16_full_eval=False,
-            output_dir="dpo_output",
+            output_dir="/raid/conan/llm_training/dpo_output",
             # optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
             gradient_checkpointing=True,
             logging_steps=20,
@@ -208,7 +209,7 @@ match rlhf_method:
             tf32=False,
             # fp16_full_eval=True,
             # bf16_full_eval=False,
-            output_dir="cpo_output",
+            output_dir="/raid/conan/llm_training/cpo_output",
             # optim="paged_adamw_8bit", # paged_adamw_8bit adamw_bnb_8bit adamw_8bit adamw_hf
             gradient_checkpointing=True,
             eval_strategy="steps",
