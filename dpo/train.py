@@ -88,7 +88,7 @@ lora_targets=[
     'gate_proj',
     'down_proj',
     'up_proj',
-    # "embed_tokens",
+    "embed_tokens",
     # 'lm_head'
     ]
 
