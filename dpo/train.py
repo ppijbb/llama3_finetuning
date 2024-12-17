@@ -257,4 +257,4 @@ match rlhf_method:
 # DPO를 사용하여 모델 학습
 if __name__ == "__main__":
     # with torch.autocast("cuda"): 
-        rlhf_trainer.train()
+        rlhf_trainer.train(resume_from_checkpoint=True)
