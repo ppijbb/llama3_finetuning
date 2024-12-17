@@ -6,6 +6,7 @@ from peft import PeftModel, PeftConfig, AutoPeftModelForCausalLM, LoraConfig
 from peft import get_peft_model_state_dict, set_peft_model_state_dict, get_peft_config, get_peft_model
 from deepspeed.utils.zero_to_fp32 import load_state_dict_from_zero_checkpoint
 from safetensors.torch import load, save_file
+from huggingface_hub import HfApi, login
 
 
 def load_model(model_path, peft_path=None):
@@ -51,25 +52,34 @@ def load_model(model_path, peft_path=None):
     #     tag=f"global_step{peft_path.split("-")[-1]}",
     #     )
     # state_dict = get_peft_model_state_dict(model=model)
-    model.to(device)
+    # model.to(device)
     # model.save_pretrained("outputs/")
     # model = model.merge_and_unload()
     # # print(state_dict.keys())
     # print(model.num_parameters())
     tokenizer = AutoTokenizer.from_pretrained(model_path)
+    # tokenizer.save_pretrained("outputs/")
     
     # Load PEFT adapter if provided
     if peft_path:
-        model.load_adapter("outputs",)
-        # model = model.merge_and_unload()
-        print(model.num_parameters())
-        peft_model = PeftModel.from_pretrained(
-            model=model, 
-            model_id=peft_path,
+        
+        peft_model = AutoPeftModelForCausalLM.from_pretrained(
+            pretrained_model_name_or_path=peft_path,
             is_trainable=False,
             use_safetensors=True,)
+        # del test
+        # model.load_adapter("outputs",)
+        # # model = model.merge_and_unload()
+        # print(model.num_parameters())
+        # peft_model = PeftModel.from_pretrained(
+        #     model=model, 
+        #     model_id=peft_path,
+        #     is_trainable=False,
+        #     use_safetensors=True,)
+        
         peft_model.to(device)
-    
+        del model
+
     return peft_model, tokenizer
 
 def generate_text(prompt, model, tokenizer, max_length=512):
@@ -92,7 +102,7 @@ if __name__ == "__main__":
     # Example usage
     base_model_path = "Gunulhona/Gemma-System-9B"  # e.g. "mistralai/Mistral-7B-v0.1"
     # base_model_path = "/home/conan/workspace/llama3_finetuning/dpo/cpo_output/checkpoint-24000/"
-    peft_path = "/home/conan/workspace/llama3_finetuning/dpo/cpo_output/checkpoint-23500"  # Path to your DPO finetuned adapter
+    # peft_path = "/home/conan/workspace/llama3_finetuning/dpo/cpo_output/checkpoint-23500"  # Path to your DPO finetuned adapter
     peft_path = "/home/conan/workspace/llama3_finetuning/outputs"
     # Load model
     try:
@@ -103,9 +113,14 @@ if __name__ == "__main__":
         print(f"Prompt: {prompt}\n")
         response = generate_text(prompt, model, tokenizer)
         print(f"Generated Response: {response}")
-        
-        
-        
+
+        api = HfApi()
+        api.upload_folder(
+            folder_path="outputs",
+            repo_id="Gunulhona/Gemma-System-9B-MoRA-SimPO",
+            repo_type="model"
+        )
+
     except Exception as e:
         print(traceback.format_exc())
         print("Faild to load model weight")
