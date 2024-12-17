@@ -7,3 +7,4 @@ wandb
 trainer_start
 LLM-Finetuning/
 *_output/
+*outputs/
