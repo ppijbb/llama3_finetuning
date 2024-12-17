@@ -114,10 +114,15 @@ if __name__ == "__main__":
         response = generate_text(prompt, model, tokenizer)
         print(f"Generated Response: {response}")
 
+        repo_id = "Gunulhona/Gemma-System-9B-MoRA-SimPO"
         api = HfApi()
+        api.create_repo(
+            repo_id=repo_id,
+            repo_type="model"
+        )
         api.upload_folder(
             folder_path="outputs",
-            repo_id="Gunulhona/Gemma-System-9B-MoRA-SimPO",
+            repo_id=repo_id,
             repo_type="model"
         )
 
