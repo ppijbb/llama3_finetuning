@@ -3,5 +3,5 @@ FSDP_CPU_RAM_EFFICIENT_LOADING=1
 
 torchrun \
     --nproc_per_node=4 \
-    llm_train/llama_finetuning.py \
-    --config llm_train/config/fsdp_qlora.yaml
+    llama_finetuning.py \
+    --config config/fsdp_qlora.yaml
